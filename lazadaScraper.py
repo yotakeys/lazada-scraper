@@ -62,14 +62,13 @@ class Lazada:
         except Exception as e:
             ...
         # # Rating
-        # try:
-        #     rating = detail_container.find_element(By.XPATH, ".//*[contains(text(),'Terjual')]").find_element(
-        #         By.XPATH, "preceding-sibling::span[2]").get_attribute("innerHTML")
-        #     rating = float(rating)
-        #     detail['rating'] = rating
-        # except Exception as e:
-        #     detail['rating'] = 0
-        detail['rating'] = 5.0
+        try:
+            rating = detail_container.find_elements(
+                By.XPATH, ".//i[@class = '_9-ogB Dy1nx']")
+            rating = float(len(rating))
+            detail['rating'] = rating
+        except Exception as e:
+            detail['rating'] = 0
 
         # # Sold
         try:
@@ -90,8 +89,8 @@ class Lazada:
         self.data = []
 
         url_safe_cat = urllib.parse.quote(cat)
-        url_safe_cat = url_safe_cat.replace("%20", "-")
-        url = f"https://www.lazada.co.id/tag/{url_safe_cat}"
+        url_safe_cat = url_safe_cat.replace("%20", "+")
+        url = f"https://www.lazada.co.id/catalog/?q={url_safe_cat}"
         # print(f'Scraping for category {cat}..')
         self.driver.get(url)
 
