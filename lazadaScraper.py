@@ -40,40 +40,34 @@ class Lazada:
         detail['category'] = category
         # Name
         try:
-            name = detail_container.find_elements(By.XPATH, "./div")[1].find_element(
-                By.XPATH, ".//a").get_attribute("title")
+            name = detail_container.find_elements(By.TAG_NAME, "div")[1].find_element(
+                By.TAG_NAME, "a").get_attribute("title")
             detail['name'] = name
         except Exception as e:
-            ...
+            detail['name'] = None
         # Price
         try:
             price = detail_container.find_elements(
-                By.XPATH, "./div")[2].find_element(
-                By.XPATH, ".//span").get_attribute("innerHTML")
+                By.TAG_NAME, "div")[2].find_element(
+                By.TAG_NAME, "span").get_attribute("innerHTML")
             price = float(re.sub('[^0-9]', '', price))
             detail['price'] = price
         except Exception as e:
-            ...
-        # Location
+            detail['price'] = None
+            
         try:
-            location = detail_container.find_element(
-                By.XPATH, ".//span[contains(text(),'Kota') or contains(text(),'Kab.')]").get_attribute("innerHTML")
+            parent_cons = detail_container.find_elements(By.TAG_NAME, "div")[4]
+            # Location
+            location = parent_cons.find_elements(By.TAG_NAME, "span")[0].get_attribute("innerHTML")
             detail['location'] = location
-        except Exception as e:
-            ...
-        # # Rating
-        try:
-            rating = detail_container.find_elements(
-                By.XPATH, ".//i[@class = '_9-ogB Dy1nx']")
+            # Rating
+            rating = parent_cons.find_element(By.TAG_NAME, "div").find_elements(
+                By.XPATH, "./i[@class = '_9-ogB Dy1nx']")
             rating = float(len(rating))
             detail['rating'] = rating
-        except Exception as e:
-            detail['rating'] = 0
 
-        # # Sold
-        try:
-            sold = detail_container.find_element(
-                By.XPATH, ".//span[contains(text(),'Terjual')]").get_attribute("innerHTML")
+            # # Sold
+            sold = parent_cons.find_elements(By.TAG_NAME, "span")[1].get_attribute("innerHTML")
             if ("rb" in sold):
                 sold = int(re.sub('[^0-9]', '', sold))
                 sold = sold * 1000
@@ -81,23 +75,29 @@ class Lazada:
                 sold = int(re.sub('[^0-9]', '', sold))
             detail['sold'] = sold
         except Exception as e:
-            detail['sold'] = 0
+            detail['location'] = None
+            detail['rating'] = None
+            detail['sold'] = None
 
         return detail
 
     def search(self, cat):
         self.data = []
+        cat = re.sub(r'[^\w\s]', '', cat)
 
         url_safe_cat = urllib.parse.quote(cat)
         url_safe_cat = url_safe_cat.replace("%20", "+")
         url = f"https://www.lazada.co.id/catalog/?q={url_safe_cat}"
+        # print(url)
         # print(f'Scraping for category {cat}..')
-        self.driver.get(url)
-
+        try:
+            self.driver.get(url)
         # for i in range(2):
         #     time.sleep(1)
-        containers = WebDriverWait(self.driver, 100).until(EC.presence_of_all_elements_located(
-            (By.XPATH, "//div[@data-qa-locator='product-item']")))
+            containers = WebDriverWait(self.driver, 10).until(EC.presence_of_all_elements_located(
+                (By.XPATH, "//div[@data-qa-locator='product-item']")))
+        except Exception as e:
+            return []
 
         for index, container in enumerate(containers):
             detail_container = container.find_element(By.TAG_NAME, "div").find_element(
@@ -127,10 +127,3 @@ class Lazada:
 
     def close_connection(self):
         self.driver.close()
-
-
-lazada = Lazada("resources/chromedriver/chromedriver.exe")
-
-produk = lazada.search("tongkat jalan")
-
-print(produk)
